@@ -9,6 +9,7 @@ type (
 	Record interface {
 		Get(ctx context.Context, url string) (entity.Record, bool, error)
 		Add(ctx context.Context, r entity.Record) error
+		Requester(ctx context.Context, url []string) ([]entity.RecordDto, error)
 	}
 
 	RecordRepo interface {
@@ -17,6 +18,6 @@ type (
 	}
 
 	RecordWebAPI interface {
-		Processing([]entity.Record) ([]entity.Record, error)
+		Processing(ctx context.Context, url string) (entity.Record, error)
 	}
 )
