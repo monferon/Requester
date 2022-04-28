@@ -48,11 +48,6 @@ func newRecordRoutes(handler *gin.RouterGroup, t usecase.Record) {
 	}
 }
 
-//type returnRecord struct {
-//	mu   sync.RWMutex
-//	Mapa map[string]entity.Record
-//}
-
 func (r *requestRoutes) doRequest(c *gin.Context) {
 	var requestURLs []string
 	if err := c.ShouldBindJSON(&requestURLs); err != nil {

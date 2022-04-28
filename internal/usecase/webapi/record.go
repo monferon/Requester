@@ -3,7 +3,6 @@ package webapi
 import (
 	"Requester/internal/entity"
 	"context"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -21,7 +20,6 @@ func (r *RecordWebAPI) Processing(ctx context.Context, url string) (entity.Recor
 	if err != nil {
 		return entity.Record{}, err
 	}
-	fmt.Println(url)
 	req = req.WithContext(ctx)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

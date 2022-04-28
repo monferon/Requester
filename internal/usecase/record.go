@@ -4,7 +4,6 @@ import (
 	"Requester/internal/entity"
 	"context"
 	"fmt"
-	"sync"
 	"time"
 )
 
@@ -36,63 +35,54 @@ func (ruc *RecordUseCase) Add(ctx context.Context, record entity.Record) error {
 	return nil
 }
 
-//type returnArr struct {
-//	mu        sync.RWMutex
-//	resultArr []entity.RecordDto
-//}
-
 func (ruc *RecordUseCase) Requester(ctx context.Context, records []string) ([]entity.RecordDto, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	//Одновременно обрабатываются 3 url. (3 goroutine)
 	guard := make(chan struct{}, 3)
-	result := make(chan entity.RecordDto, 100)
+	result := make(chan entity.RecordDto)
 	errs := make(chan error, 1)
-
 	resultArr := make([]entity.RecordDto, 0)
-	counter := 0
-	wg := sync.WaitGroup{}
-	for _, val := range records {
+	//wg := sync.WaitGroup{}
+	for index, val := range records {
 		guard <- struct{}{}
-		wg.Add(1)
-		if counter <= 100 {
-			go func(val string) {
-				defer wg.Done()
-				record, ok, err := ruc.repo.Get(ctx, val)
+		if index > 100 {
+			return resultArr, nil
+		}
+		//wg.Add(1)
+		go func(val string) {
+			//defer wg.Done()
+			record, ok, err := ruc.repo.Get(ctx, val)
+			if err != nil {
+				errs <- err
+			}
+			if !ok || time.Now().Unix()-record.Ttl > 10 {
+				rec, err := ruc.webAPI.Processing(ctx, val)
 				if err != nil {
 					errs <- err
-					//TODO err
 				}
-				if !ok || time.Now().Unix()-record.Ttl > 10 {
-					rec, err := ruc.webAPI.Processing(ctx, val)
-					if err != nil {
-						errs <- err
-						//TODO err
-					}
-					err = ruc.repo.Set(ctx, rec)
-					if err != nil {
-						errs <- err
-						//TODO err
-					}
-					result <- entity.RecordDto{URL: rec.URL, Size: rec.Size}
-				} else {
-					result <- entity.RecordDto{URL: record.URL, Size: record.Size}
+				err = ruc.repo.Set(ctx, rec)
+				if err != nil {
+					errs <- err
 				}
-				<-guard
-			}(val)
-			//wg.Wait()
-			select {
-			case t := <-result:
-				resultArr = append(resultArr, t)
-			case e := <-errs:
-				//fmt.Println("eee", e)
-				ctx.Done()
-				return nil, e
-			case <-ctx.Done():
-				fmt.Println("ABORTED11111")
+				result <- entity.RecordDto{URL: rec.URL, Size: rec.Size}
+			} else {
+				result <- entity.RecordDto{URL: record.URL, Size: record.Size}
 			}
+			<-guard
+		}(val)
+		//wg.Wait()
+		select {
+		case t := <-result:
+			resultArr = append(resultArr, t)
+		case e := <-errs:
+			//ctx.Done()
+			return nil, e
+
+		case <-ctx.Done():
+			fmt.Println("ABORTED11111")
+
 		}
-		counter++
+
 	}
 	return resultArr, nil
 }

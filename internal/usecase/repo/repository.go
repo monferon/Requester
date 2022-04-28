@@ -11,15 +11,6 @@ type RecordRepo struct {
 	Records map[string]entity.Record
 }
 
-//type CacheService struct {
-//	cache Repository
-//}
-//
-//type Repository interface {
-//	Get(URL string) (Record, error)
-//	Add(URL string, size int) error
-//}
-
 func New() *RecordRepo {
 	return &RecordRepo{
 		Records: make(map[string]entity.Record),
