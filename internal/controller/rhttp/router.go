@@ -51,11 +51,15 @@ func newRecordRoutes(handler *gin.RouterGroup, t usecase.Record) {
 func (r *requestRoutes) doRequest(c *gin.Context) {
 	var requestURLs []string
 	if err := c.ShouldBindJSON(&requestURLs); err != nil {
+		c.Abort()
 		fmt.Println("error, ShouldBindJSON", err)
-		//TODO
 	}
 	resultArr, err := r.t.Requester(c.Request.Context(), requestURLs)
-	fmt.Println(resultArr, err)
+	if err != nil {
+		c.Abort()
+		fmt.Println(err)
+	}
+	//fmt.Println(resultArr, err)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"Error": err.Error()})
 	} else {
