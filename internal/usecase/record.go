@@ -4,6 +4,7 @@ import (
 	"Requester/internal/entity"
 	"context"
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -84,5 +85,6 @@ func (ruc *RecordUseCase) Requester(ctx context.Context, records []string) ([]en
 		}
 
 	}
+	log.Println("Return result ")
 	return resultArr, nil
 }
